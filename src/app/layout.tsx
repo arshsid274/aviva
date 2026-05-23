@@ -1,30 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { playfairDisplay, inter } from "@/lib/fonts";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import { Navbar } from "@/components/chrome/Navbar";
+import { Footer } from "@/components/chrome/Footer";
+import { SITE_META } from "@/lib/content";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const SITE_URL = "https://www.rawanemgawer.com";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(SITE_META.url),
   title: {
-    default: "Rawan Emgawer Architects — Where Design Becomes Legacy",
-    template: "%s | Rawan Emgawer Architects",
+    default: SITE_META.title,
+    template: `%s | ${SITE_META.shortName}`,
   },
-  description:
-    "Independent architect creating thoughtful spaces that connect people and place. Architecture, interiors, and large-scale environments designed with clarity, purpose, and longevity.",
+  description: SITE_META.description,
   keywords: [
     "Rawan Emgawer Architects",
-    "REA",
+    "REA CO",
     "architecture",
     "interior architecture",
     "masterplanning",
@@ -32,22 +23,22 @@ export const metadata: Metadata = {
     "Dubai architecture",
     "residential architecture",
     "commercial architecture",
+    "healthcare architecture",
   ],
-  authors: [{ name: "Rawan Emgawer Architects" }],
+  authors: [{ name: SITE_META.name }],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    url: SITE_URL,
-    siteName: "Rawan Emgawer Architects",
-    title: "Rawan Emgawer Architects — Where Design Becomes Legacy",
-    description:
-      "A multidisciplinary design consultancy creating architecture, interiors, and large-scale environments with clarity, purpose, and longevity.",
+    url: SITE_META.url,
+    siteName: SITE_META.name,
+    title: SITE_META.title,
+    description: SITE_META.description,
+    images: [{ url: "/logo.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rawan Emgawer Architects",
-    description:
-      "Architecture as a dialogue between space, context, and human experience.",
+    title: SITE_META.name,
+    description: SITE_META.description,
   },
   robots: {
     index: true,
@@ -58,15 +49,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${playfairDisplay.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-[var(--color-paper)] text-[var(--color-ink)]">
+        <SmoothScroll />
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }

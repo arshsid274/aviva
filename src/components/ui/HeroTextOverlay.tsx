@@ -8,48 +8,60 @@ interface Props {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const EXIT_BY = 0.12;
-const HIDE_BY = 0.22;
+/**
+ * Springs-style hero overlay. As the user scrolls into the AircraftScroll
+ * sequence, the whole block translates Y from 0% → -50% and fades out.
+ * Mirrors Springs' parallax pair:
+ *   --100-0 → translateY(0%)   opacity 1
+ *   --150-0 → translateY(-50%) opacity 0
+ *
+ * Animation window is the first ~7% of the AircraftScroll's 600vh container,
+ * which is roughly 42vh of scroll — matches the Springs feel. Curve is a
+ * cubic ease-out so the rise feels intentional, not linear.
+ */
+// Container is 1000vh; ~42vh of scroll = 0.042 normalized. Text fully fades
+// out before frame 24/240 of the canvas sequence, leaving the rest of the
+// canvas clear for the architecture sequence.
+const EXIT_BY = 0.042;
+const HIDE_BY = 0.06;
+
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function HeroTextOverlay({ containerRef }: Props) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const leftRef = useRef<HTMLDivElement>(null);
-  const rightRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let rafId: number;
 
     const update = () => {
       const container = containerRef.current;
-      const wrapper = wrapperRef.current;
-      const left = leftRef.current;
-      const right = rightRef.current;
-
-      if (!container || !wrapper || !left || !right) {
+      const wrap = wrapRef.current;
+      if (!container || !wrap) {
         rafId = requestAnimationFrame(update);
         return;
       }
 
       const rect = container.getBoundingClientRect();
-      const scrollableHeight = rect.height - window.innerHeight;
-      const scrollProgress =
-        scrollableHeight > 0
-          ? Math.max(0, Math.min(1, -rect.top / scrollableHeight))
+      const scrollable = rect.height - window.innerHeight;
+      const progress =
+        scrollable > 0
+          ? Math.max(0, Math.min(1, -rect.top / scrollable))
           : 0;
 
-      if (scrollProgress >= HIDE_BY) {
-        wrapper.style.display = "none";
+      if (progress >= HIDE_BY) {
+        wrap.style.display = "none";
         rafId = requestAnimationFrame(update);
         return;
       }
 
-      wrapper.style.display = "";
+      wrap.style.display = "";
 
-      const p = Math.min(1, scrollProgress / EXIT_BY);
+      const p = Math.min(1, progress / EXIT_BY);
+      const eased = easeOut(p);
 
-      left.style.transform = `translateX(${-p * 110}px)`;
-      right.style.transform = `translateX(${p * 110}px)`;
-      wrapper.style.opacity = String(1 - p);
+      // Springs: translateY(0%) → translateY(-50%), opacity 1 → 0.
+      wrap.style.transform = `translate3d(0, ${-eased * 50}%, 0)`;
+      wrap.style.opacity = String(1 - eased);
 
       rafId = requestAnimationFrame(update);
     };
@@ -59,31 +71,21 @@ export default function HeroTextOverlay({ containerRef }: Props) {
   }, [containerRef]);
 
   return (
-    <div ref={wrapperRef} className={styles.overlay} aria-hidden="true">
-      <div ref={leftRef} className={styles.leftContent}>
-        <span className={styles.tagline}>Rawan Emgawer Architects</span>
+    <div className={styles.overlay} aria-hidden="true">
+      <div ref={wrapRef} className={styles.wrap}>
+        <span className={styles.eyebrow}>Rawan Emgawer Architects</span>
         <h1 className={`${playfairDisplay.className} ${styles.headline}`}>
-          <span className={styles.headlineItalic}>Where Design</span>
-          <span className={styles.headlineMain}>Becomes Legacy</span>
+          Where Design
+          <br />
+          Becomes <em>Legacy</em>
         </h1>
-        <div className={styles.divider} />
-        <p className={styles.body}>
-          A multidisciplinary design consultancy creating architecture,
-          interiors, and large-scale environments with clarity, purpose,
-          and longevity.
+        <p className={styles.subline}>
+          Architecture, Interiors,
+          <br />
+          and Large-Scale Environments
+          <br />
+          Built for Longevity.
         </p>
-      </div>
-
-      <div ref={rightRef} className={styles.rightContent}>
-        <span className={styles.ctaLabel}>Begin a project</span>
-        <a
-          href="#contact"
-          className={styles.ctaButton}
-          aria-hidden="false"
-          tabIndex={0}
-        >
-          Get in Touch
-        </a>
       </div>
     </div>
   );
